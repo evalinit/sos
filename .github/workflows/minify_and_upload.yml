@@ -36,6 +36,6 @@ jobs:
         run: |
           git config --global user.email "github-actions@github.com"
           git config --global user.name "GitHub Actions"
-          git add ./dist
+          git add .
           git commit -m "Minified and versioned JavaScript files"
           git push
