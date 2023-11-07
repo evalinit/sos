@@ -18,10 +18,13 @@ jobs:
         with:
           node-version: '18'
 
+      - name: Print Working Directory
+        run: pwd
+        
       - name: Minify JavaScript with UglifyJS
         run: |
           npm install -g uglify-js
-          uglifyjs src/*.js -o dist/script.min.js --compress --mangle
+          uglifyjs ./src/*.js -o ./dist/script.min.js --compress --mangle
 
       - name: Create Release
         id: create_release
