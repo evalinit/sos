@@ -18,9 +18,6 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Transpile with Babel
-        run: npx babel src --out-dir dist
-
       - name: Minify with UglifyJS
         run: npx uglifyjs dist/*.js -o dist/minified.js
 
