@@ -29,13 +29,13 @@ jobs:
 
       - name: Copy to Versioned Folder
         run: |
-          mkdir -p "version_$GITHUB_RUN_NUMBER"
-          cp dist/script.min.js "version_$GITHUB_RUN_NUMBER/"
+          mkdir -p dist/"version_$GITHUB_RUN_NUMBER"
+          cp dist/script.min.js dist/"version_$GITHUB_RUN_NUMBER/"
 
       - name: Commit and Push changes
         run: |
           git config --global user.email "github-actions@github.com"
           git config --global user.name "GitHub Actions"
-          git add .
+          git add dist
           git commit -m "Minified and versioned JavaScript files"
           git push
