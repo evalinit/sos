@@ -18,9 +18,6 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install dependencies
-        run: npm install
-
       - name: Transpile with Babel
         run: npx babel src --out-dir dist
 
