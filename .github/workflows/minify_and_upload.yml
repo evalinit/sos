@@ -19,9 +19,6 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Print Working Directory
-        run: pwd
-        
       - name: Minify JavaScript with UglifyJS
         run: |
           npm install -g uglify-js
@@ -37,5 +34,5 @@ jobs:
           git config --global user.email "github-actions@github.com"
           git config --global user.name "GitHub Actions"
           git add dist
-          git commit -m "Minified and versioned JavaScript files"
+          git commit -m "Version $GITHUB_RUN_NUMBER"
           git push
