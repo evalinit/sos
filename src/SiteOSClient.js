@@ -1,34 +1,55 @@
 class SiteOSClient {
-    constructor (options) {
+    constructor () {
         this.listeners = {}
 
-        this.options = options
+        this.referrer = null
 
-        this.#init()
+        this.init()
     }
 
-    #init () {
-        // send app icon and what not here
+    init () {
+        this.setReferrer()
 
-        window.addEventListener('message', this.#onMessage)
+        window.addEventListener('message', event => this.onMessage(event))
     }
 
-    #onMessage (event) {
-        const { name, data } = event.data
+    onMessage (event) {
+        const referrerOrigin = new URL(this.referrer).origin
+
+        if (event.origin !== referrerOrigin) return
+
+        const { name, args } = event.data
 
         const listener = this.listeners[name]
 
-        if (!listener) return
+        if (!listener) {
+            return
+        }
 
-        listener(data)
+        listener(...args)
     }
 
-    #postMessage (data) {
-        window.parent.postMessage(data, window.parent.location.origin)
+    setReferrer () {
+        if (document.referrer) {
+            sessionStorage.setItem('referrer', document.referrer)
+        }
+
+        const referrer = sessionStorage.getItem('referrer')
+
+        if (referrer) {
+            this.referrer = referrer
+        }
     }
 
-    #uniqueID () {
-        return Math.floor(Math.random() * Date.now())
+    postMessage (data) {
+        if (window.opener) {
+            window.opener.postMessage(data, this.referrer)
+
+            return
+        }
+
+
+        window.parent.postMessage(data, this.referrer)
     }
 
     on (name, cb) {
@@ -39,15 +60,12 @@ class SiteOSClient {
         delete this.listeners[name]
     }
 
-    emit (name, data) {
-        const eventID = this.#uniqueID()
-
+    emit (name, ...args) {
         const payload = {
             name,
-            data,
-            eventID
+            args
         }
 
-        this.#postMessage(payload)
+        this.postMessage(payload)
     }
 }
