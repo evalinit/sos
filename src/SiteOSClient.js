@@ -4,16 +4,16 @@ class SiteOSClient {
 
         this.referrer = null
 
-        this.init()
+        this.#init()
     }
 
-    init () {
-        this.setReferrer()
+    #init () {
+        this.#setReferrer()
 
-        window.addEventListener('message', event => this.onMessage(event))
+        window.addEventListener('message', event => this.#onMessage(event))
     }
 
-    onMessage (event) {
+    #onMessage (event) {
         const referrerOrigin = new URL(this.referrer).origin
 
         if (event.origin !== referrerOrigin) return
@@ -29,7 +29,7 @@ class SiteOSClient {
         listener(...args)
     }
 
-    setReferrer () {
+    #setReferrer () {
         if (document.referrer) {
             sessionStorage.setItem('referrer', document.referrer)
         }
@@ -41,7 +41,7 @@ class SiteOSClient {
         }
     }
 
-    postMessage (data) {
+    #postMessage (data) {
         if (window.opener) {
             window.opener.postMessage(data, this.referrer)
 
@@ -66,6 +66,6 @@ class SiteOSClient {
             args
         }
 
-        this.postMessage(payload)
+        this.#postMessage(payload)
     }
 }
