@@ -31,9 +31,11 @@ class SiteOSController {
         let targetInstance
 
         for (const instance of this.instances) {
-            // TODO: handle tabs
+            const matchedFrame = instance.type === 'iframe' && (instance.target.contentWindow === event.source)
+
+            const matchedTab = instance.type === 'tab' && (instance.target === event.source)
             
-            if (instance.target.contentWindow !== event.source) continue
+            if (!matchedFrame || !matchedTab) continue
 
             targetInstance = instance
         }
@@ -55,50 +57,10 @@ class SiteOSController {
         document.body.appendChild(div)
     }
 
-    on (name, cb) {
-        this.listeners[name] = cb
-    }
-
-    off (name) {
-        delete this.listeners[name]
-    }
-
-    emit (name, ...args) {
-        const payload = {
-            name,
-            args
-        }
-
-        for (const instance of this.instances) {
-            // TODO: handle tabs
-
-            instance.target.contentWindow.postMessage(payload, this.origin)
-        }
-    }
-
-    launch (containerId) {
-        const iframe = document.createElement('iframe')
-
-        iframe.src = this.url
-
-        iframe.style.width = '100%'
-        iframe.style.height = '100%'
-
-        let container
-
-        if (containerId) {
-            container = document.getElementById(containerId)
-        }
-
-        if (!container) {
-            container = document.getElementById(this.hiddenContainerID)
-        }
-
-        container.appendChild(iframe)
-
+    #createInstance (target, type) {
         const instance = {
-            target: iframe,
-            type: 'iframe',
+            target,
+            type,
             origin: this.origin
         }
 
@@ -118,13 +80,70 @@ class SiteOSController {
                 args
             }
 
-            // TODO: handle tabs
+            if (this.type === 'iframe') {
+                this.target.contentWindow.postMessage(payload, this.origin)
 
-            this.target.contentWindow.postMessage(payload, this.origin)
+                return
+            }
+
+            this.target.postMessage(payload, this.origin)
         }
 
         this.instances.push(instance)
 
         return instance
+    }
+
+    on (name, cb) {
+        this.listeners[name] = cb
+    }
+
+    off (name) {
+        delete this.listeners[name]
+    }
+
+    emit (name, ...args) {
+        const payload = {
+            name,
+            args
+        }
+
+        for (const instance of this.instances) {
+            if (instance.type === 'iframe') {
+                instance.target.contentWindow.postMessage(payload, this.origin)
+
+                continue
+            }
+            
+            instance.target.postMessage(payload, this.origin)
+        }
+    }
+
+    launch (containerId) {
+        const iframe = document.createElement('iframe')
+
+        iframe.src = this.url
+        iframe.style.width = '100%'
+        iframe.style.height = '100%'
+
+        let container
+
+        if (containerId) {
+            container = document.getElementById(containerId)
+        }
+
+        if (!container) {
+            container = document.getElementById(this.hiddenContainerID)
+        }
+
+        container.appendChild(iframe)
+
+        this.#createInstance(iframe, 'iframe')
+    }
+
+    launchTab () {
+        const tab = window.open(this.url)
+
+        this.#createInstance(tab, 'tab')
     }
 }
