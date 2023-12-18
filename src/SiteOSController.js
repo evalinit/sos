@@ -138,12 +138,16 @@ class SiteOSController {
 
         container.appendChild(iframe)
 
-        this.#createInstance(iframe, 'iframe')
+        const instance = this.#createInstance(iframe, 'iframe')
+
+        return instance
     }
 
     launchTab () {
         const tab = window.open(this.url)
 
-        this.#createInstance(tab, 'tab')
+        const instance = this.#createInstance(tab, 'tab')
+
+        return instance
     }
 }
