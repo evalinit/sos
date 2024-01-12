@@ -123,6 +123,11 @@ class SiteOSController {
         const iframe = document.createElement('iframe')
 
         iframe.src = this.url
+        iframe.allow = 'midi; geolocation; microphone; camera; display-capture; encrypted-media; clipboard-read; clipboard-write; notifications; payment-handler; persistent-storage; background-sync; ambient-light-sensor; accessibility-events;'
+        iframe.sandbox = 'allow-modals allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation-by-user-activation allow-downloads'
+        iframe.allowfullscreen = ''
+        iframe.allowpaymentrequest = ''
+        iframe.frameborder = '0'
         iframe.style.width = '100%'
         iframe.style.height = '100%'
 
