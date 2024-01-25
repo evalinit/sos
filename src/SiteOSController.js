@@ -89,6 +89,22 @@ class SiteOSController {
             this.target.postMessage(payload, this.origin)
         }
 
+        instance.destroy = () => {
+            let matchedIndex
+
+            for (const [index, obj] of this.instances.entries()) {
+                if (obj !== instance) continue
+
+                matchedIndex = index
+
+                break
+            }
+
+            instance.target.remove()
+
+            this.instances.splice(matchedIndex, 1)
+        }
+
         this.instances.push(instance)
 
         return instance
