@@ -119,33 +119,39 @@ class SiteOSController {
         }
     }
 
-    launch (containerId) {
-        const iframe = document.createElement('iframe')
+    async launch (containerId) {
+        const promise = new Promise(resolve => {
+            const iframe = document.createElement('iframe')
 
-        iframe.src = this.url
-        iframe.allow = 'midi; geolocation; microphone; camera; display-capture; encrypted-media; clipboard-read; clipboard-write; notifications; payment-handler; persistent-storage; background-sync; ambient-light-sensor; accessibility-events;'
-        iframe.sandbox = 'allow-modals allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation-by-user-activation allow-downloads'
-        iframe.allowfullscreen = ''
-        iframe.allowpaymentrequest = ''
-        iframe.frameborder = '0'
-        iframe.style.width = '100%'
-        iframe.style.height = '100%'
+            iframe.src = this.url
+            iframe.allow = 'midi; geolocation; microphone; camera; display-capture; encrypted-media; clipboard-read; clipboard-write; notifications; payment-handler; persistent-storage; background-sync; ambient-light-sensor; accessibility-events;'
+            iframe.sandbox = 'allow-modals allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation-by-user-activation allow-downloads'
+            iframe.allowfullscreen = ''
+            iframe.allowpaymentrequest = ''
+            iframe.frameborder = '0'
+            iframe.style.width = '100%'
+            iframe.style.height = '100%'
 
-        let container
+            const instance = this.#createInstance(iframe, 'iframe')
 
-        if (containerId) {
-            container = document.getElementById(containerId)
-        }
+            iframe.addEventListener('load', () => {
+                resolve(instance)
+            })
 
-        if (!container) {
-            container = document.getElementById(this.hiddenContainerID)
-        }
+            let container
 
-        container.appendChild(iframe)
+            if (containerId) {
+                container = document.getElementById(containerId)
+            }
 
-        const instance = this.#createInstance(iframe, 'iframe')
+            if (!container) {
+                container = document.getElementById(this.hiddenContainerID)
+            }
 
-        return instance
+            container.appendChild(iframe)
+        })
+
+        return promise
     }
 
     launchTab () {
