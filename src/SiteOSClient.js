@@ -1,5 +1,7 @@
 class SiteOSClient {
-    constructor () {
+    constructor (options) {
+        this.options = options
+
         this.listeners = {}
 
         this.referrer = null
@@ -8,9 +10,77 @@ class SiteOSClient {
     }
 
     #init () {
+        this.#setLocation()
+
         this.#setReferrer()
 
+        if (this.options.trackLocation) {
+            this.#attachLocationChangeEvents()
+
+            const originalLocation = sessionStorage.getItem('location')
+
+            if (location.href !== originalLocation) {
+                this.#postMessage({
+                    name: 'SiteOSClientLocationChanged',
+                    args: [location.href]
+                })
+            }
+        }
+
         window.addEventListener('message', event => this.#onMessage(event))
+    }
+
+    #setLocation () {
+        const existingValue = sessionStorage.getItem('location')
+
+        if (existingValue) return
+
+        sessionStorage.setItem('location', location.href)
+    }
+
+    #setReferrer () {
+        const existingValue = sessionStorage.getItem('referrer')
+
+        if (document.referrer && !existingValue) {
+            sessionStorage.setItem('referrer', document.referrer)
+        }
+
+        const referrer = sessionStorage.getItem('referrer')
+
+        if (referrer) {
+            this.referrer = referrer
+        }
+    }
+
+    #attachLocationChangeEvents () {
+        const { pushState, replaceState } = history
+
+        history.pushState = function () {
+            const value = pushState.apply(this, arguments)
+
+            window.dispatchEvent(new Event('locationchange'))
+
+            return value
+        }
+
+        history.replaceState = function () {
+            const value = replaceState.apply(this, arguments)
+
+            window.dispatchEvent(new Event('locationchange'))
+
+            return value
+        }
+
+        window.addEventListener('popstate', () => {
+            window.dispatchEvent(new Event('locationchange'))
+        })
+
+        window.addEventListener('locationchange', () => {
+            this.#postMessage({
+                name: 'SiteOSClientLocationChanged',
+                args: [location.href]
+            })
+        })
     }
 
     #onMessage (event) {
@@ -27,18 +97,6 @@ class SiteOSClient {
         }
 
         listener(...args)
-    }
-
-    #setReferrer () {
-        if (document.referrer) {
-            sessionStorage.setItem('referrer', document.referrer)
-        }
-
-        const referrer = sessionStorage.getItem('referrer')
-
-        if (referrer) {
-            this.referrer = referrer
-        }
     }
 
     #postMessage (data) {
