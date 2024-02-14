@@ -14,7 +14,7 @@ class SiteOSClient {
 
         this.#setReferrer()
 
-        if (this.options.trackLocation) {
+        if (this.options?.trackLocation) {
             this.#attachLocationChangeEvents()
 
             const originalLocation = sessionStorage.getItem('location')
