@@ -1,4 +1,4 @@
-export class SiteOSClient {
+class SiteOSClient {
     constructor (options) {
         this.options = options
 
@@ -127,3 +127,4 @@ export class SiteOSClient {
         this.#postMessage(payload)
     }
 }
+export SiteOSClient
