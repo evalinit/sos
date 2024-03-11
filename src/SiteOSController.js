@@ -1,4 +1,4 @@
-class SiteOSController {
+export class SiteOSController {
     constructor (url) {
         this.url = url
 
