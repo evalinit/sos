@@ -1,4 +1,4 @@
-export class SiteOSController {
+class SiteOSController {
     constructor (url) {
         this.url = url
 
@@ -178,3 +178,4 @@ export class SiteOSController {
         return instance
     }
 }
+export SiteOSController
