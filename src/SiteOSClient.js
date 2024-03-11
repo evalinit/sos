@@ -1,4 +1,4 @@
-class SiteOSClient {
+export class SiteOSClient {
     constructor (options) {
         this.options = options
 
