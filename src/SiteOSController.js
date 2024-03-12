@@ -210,3 +210,4 @@ class SiteOSController {
         return instance
     }
 }
+export SiteOSController

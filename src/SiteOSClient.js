@@ -166,3 +166,4 @@ class SiteOSClient {
         delete this.promises[promiseID]
     }
 }
+export SiteOSClient
