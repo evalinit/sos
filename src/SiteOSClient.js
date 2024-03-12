@@ -4,6 +4,8 @@ class SiteOSClient {
 
         this.listeners = {}
 
+        this.promises = {}
+
         this.referrer = null
 
         this.#init()
@@ -88,7 +90,13 @@ class SiteOSClient {
 
         if (event.origin !== referrerOrigin) return
 
-        const { name, args } = event.data
+        const { name, args, promiseID } = event.data
+
+        if (promiseID) {
+            this.#resolveRequest(promiseID, args)
+
+            return
+        }
 
         const listener = this.listeners[name]
 
@@ -125,5 +133,36 @@ class SiteOSClient {
         }
 
         this.#postMessage(payload)
+    }
+
+    request (name, ...args) {
+        const id = crypto.randomUUID()
+
+        const promise = new Promise(resolve => {
+            this.promises[id] = resolve
+        })
+
+        args.unshift(id)
+
+        const payload = {
+            name,
+            args
+        }
+
+        this.#postMessage(payload)
+
+        return promise
+    }
+
+    #resolveRequest (promiseID, args) {
+        const resolve = this.promises[promiseID]
+
+        if (!resolve) {
+            return
+        }
+
+        resolve(...args)
+
+        delete this.promises[promiseID]
     }
 }

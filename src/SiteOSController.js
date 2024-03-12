@@ -40,7 +40,7 @@ class SiteOSController {
             targetInstance = instance
         }
 
-        listener(...args, targetInstance)
+        listener(...args)
     }
 
     #createHiddenContainer () {
@@ -89,6 +89,21 @@ class SiteOSController {
             this.target.postMessage(payload, this.origin)
         }
 
+        instance.resolve = function (promiseID, ...args) {
+            const payload = {
+                promiseID,
+                args
+            }
+
+            if (this.type === 'iframe') {
+                this.target.contentWindow.postMessage(payload, this.origin)
+
+                return
+            }
+
+            this.target.postMessage(payload, this.origin)
+        }
+
         instance.destroy = () => {
             let matchedIndex
 
@@ -121,6 +136,23 @@ class SiteOSController {
     emit (name, ...args) {
         const payload = {
             name,
+            args
+        }
+
+        for (const instance of this.instances) {
+            if (instance.type === 'iframe') {
+                instance.target.contentWindow.postMessage(payload, this.origin)
+
+                continue
+            }
+            
+            instance.target.postMessage(payload, this.origin)
+        }
+    }
+
+    resolve (promiseID, ...args) {
+        const payload = {
+            promiseID,
             args
         }
 
