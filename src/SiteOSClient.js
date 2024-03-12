@@ -1,4 +1,4 @@
-class SiteOSClient {
+export class SiteOSClient {
     constructor (options) {
         this.options = options
 
@@ -166,4 +166,3 @@ class SiteOSClient {
         delete this.promises[promiseID]
     }
 }
-export SiteOSClient
