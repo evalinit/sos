@@ -142,7 +142,7 @@ export class SiteOSClient {
             this.promises[id] = resolve
         })
 
-        args.unshift(id)
+        args.push(id)
 
         const payload = {
             name,
