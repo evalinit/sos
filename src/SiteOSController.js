@@ -172,7 +172,7 @@ export class SiteOSController {
             const iframe = document.createElement('iframe')
 
             iframe.src = this.url
-            iframe.allow = 'midi; geolocation; microphone; camera; display-capture; encrypted-media; clipboard-read; clipboard-write; notifications; payment-handler; persistent-storage; background-sync; ambient-light-sensor; accessibility-events;'
+            iframe.allow = 'geolocation; microphone; camera; display-capture;'
             iframe.sandbox = 'allow-modals allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation-by-user-activation allow-downloads'
             iframe.allowfullscreen = ''
             iframe.allowpaymentrequest = ''
