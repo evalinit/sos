@@ -161,7 +161,7 @@ export class SiteOSClient {
             return
         }
 
-        resolve(...args)
+        resolve(args)
 
         delete this.promises[promiseID]
     }
