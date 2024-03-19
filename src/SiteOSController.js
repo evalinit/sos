@@ -6,6 +6,8 @@ export class SiteOSController {
 
         this.listeners = {}
 
+        this.promises = {}
+
         this.instances = []
 
         this.hiddenContainerID = 'site-os-hidden-container'
@@ -22,7 +24,13 @@ export class SiteOSController {
     #onMessage (event) {
         if (event.origin !== this.origin) return
 
-        const { name, args } = event.data
+        const { name, args, promiseID } = event.data
+
+        if (promiseID) {
+            this.#resolveRequest(promiseID, args)
+
+            return
+        }
 
         const listener = this.listeners[name]
 
@@ -150,6 +158,20 @@ export class SiteOSController {
         }
     }
 
+    async request (name, ...args) {
+        const id = crypto.randomUUID()
+
+        const promise = new Promise(resolve => {
+            this.promises[id] = resolve
+        })
+
+        args.push(id)
+
+        this.emit(name, ...args)
+
+        return promise
+    }
+
     resolve (promiseID, ...args) {
         const payload = {
             promiseID,
@@ -165,6 +187,18 @@ export class SiteOSController {
             
             instance.target.postMessage(payload, this.origin)
         }
+    }
+
+    #resolveRequest (promiseID, args) {
+        const resolve = this.promises[promiseID]
+
+        if (!resolve) {
+            return
+        }
+
+        resolve(...args)
+
+        delete this.promises[promiseID]
     }
 
     async launch (containerId) {

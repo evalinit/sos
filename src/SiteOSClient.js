@@ -154,6 +154,15 @@ export class SiteOSClient {
         return promise
     }
 
+    resolve (promiseID, ...args) {
+        const payload = {
+            promiseID,
+            args
+        }
+
+        this.#postMessage(payload)
+    }
+
     #resolveRequest (promiseID, args) {
         const resolve = this.promises[promiseID]
 
