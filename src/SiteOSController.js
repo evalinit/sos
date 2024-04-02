@@ -201,7 +201,7 @@ export class SiteOSController {
         delete this.promises[promiseID]
     }
 
-    async launch (containerId) {
+    async launch (containerOrID) {
         const promise = new Promise(resolve => {
             const iframe = document.createElement('iframe')
 
@@ -222,8 +222,12 @@ export class SiteOSController {
 
             let container
 
-            if (containerId) {
-                container = document.getElementById(containerId)
+            if (containerOrID) {
+                if (typeof containerOrID === 'string') {
+                    container = document.getElementById(containerOrID)
+                } else {
+                    container = containerOrID
+                }
             }
 
             if (!container) {
