@@ -1,6 +1,10 @@
 export class SiteOSController {
     constructor (url) {
-        this.url = url
+        const newURL = new URL(url)
+
+        newURL.searchParams.set('SiteOSReferrer', location.origin)
+
+        this.url = newURL
 
         this.origin = new URL(url).origin
 

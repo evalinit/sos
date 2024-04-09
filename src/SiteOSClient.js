@@ -43,11 +43,13 @@ export class SiteOSClient {
     #setReferrer () {
         const existingValue = sessionStorage.getItem('referrer')
 
-        if (document.referrer && !existingValue) {
-            sessionStorage.setItem('referrer', document.referrer)
+        let referrer = new URL(location.href).searchParams.get('SiteOSReferrer')
+
+        if (referrer && !existingValue) {
+            sessionStorage.setItem('referrer', referrer)
         }
 
-        const referrer = sessionStorage.getItem('referrer')
+        referrer = sessionStorage.getItem('referrer')
 
         if (referrer) {
             this.referrer = referrer
