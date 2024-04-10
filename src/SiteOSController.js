@@ -47,12 +47,14 @@ export class SiteOSController {
 
             const matchedTab = instance.type === 'tab' && (instance.target === event.source)
             
-            if (!matchedFrame || !matchedTab) continue
+            if (!matchedFrame && !matchedTab) continue
 
             targetInstance = instance
+
+            break
         }
 
-        listener(...args)
+        listener(...args, targetInstance)
     }
 
     #createHiddenContainer () {

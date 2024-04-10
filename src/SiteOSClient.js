@@ -41,19 +41,7 @@ export class SiteOSClient {
     }
 
     #setReferrer () {
-        const existingValue = sessionStorage.getItem('referrer')
-
-        let referrer = new URL(location.href).searchParams.get('SiteOSReferrer')
-
-        if (referrer && !existingValue) {
-            sessionStorage.setItem('referrer', referrer)
-        }
-
-        referrer = sessionStorage.getItem('referrer')
-
-        if (referrer) {
-            this.referrer = referrer
-        }
+        this.referrer = new URL(location.href).searchParams.get('SiteOSReferrer')
     }
 
     #attachLocationChangeEvents () {
@@ -90,7 +78,9 @@ export class SiteOSClient {
     #onMessage (event) {
         const referrerOrigin = new URL(this.referrer).origin
 
-        if (event.origin !== referrerOrigin) return
+        if (event.origin !== referrerOrigin) {
+            return
+        }
 
         const { name, args, promiseID } = event.data
 
