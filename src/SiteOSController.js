@@ -26,7 +26,17 @@ export class SiteOSController {
     }
 
     #onMessage (event) {
-        if (event.origin !== this.origin) return
+        let isOwnInstance = false
+
+        for (const instance of this.instances) {
+            if (instance.target.contentWindow === event.source) {
+                isOwnInstance = true
+
+                break
+            }
+        }
+
+        if (event.origin !== this.origin || !isOwnInstance) return
 
         const { name, args, promiseID } = event.data
 
