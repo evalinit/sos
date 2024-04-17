@@ -1,84 +1,30 @@
 export class SiteOSClient {
-    constructor (options) {
-        this.options = options
-
+    constructor () {
         this.listeners = {}
 
         this.promises = {}
 
-        this.referrer = null
-
         this.#init()
     }
 
+
+
+
+
     #init () {
-        this.#setLocation()
-
-        this.#setReferrer()
-
-        if (this.options?.trackLocation) {
-            this.#attachLocationChangeEvents()
-
-            const originalLocation = sessionStorage.getItem('location')
-
-            if (location.href !== originalLocation) {
-                this.#postMessage({
-                    name: 'SiteOSClientLocationChanged',
-                    args: [location.href]
-                })
-            }
-        }
-
         window.addEventListener('message', event => this.#onMessage(event))
+
+        this.#attachLocationChangeEvents()
     }
 
-    #setLocation () {
-        const existingValue = sessionStorage.getItem('location')
 
-        if (existingValue) return
 
-        sessionStorage.setItem('location', location.href)
-    }
 
-    #setReferrer () {
-        this.referrer = new URL(location.href).searchParams.get('SiteOSReferrer')
-    }
-
-    #attachLocationChangeEvents () {
-        const { pushState, replaceState } = history
-
-        history.pushState = function () {
-            const value = pushState.apply(this, arguments)
-
-            window.dispatchEvent(new Event('locationchange'))
-
-            return value
-        }
-
-        history.replaceState = function () {
-            const value = replaceState.apply(this, arguments)
-
-            window.dispatchEvent(new Event('locationchange'))
-
-            return value
-        }
-
-        window.addEventListener('popstate', () => {
-            window.dispatchEvent(new Event('locationchange'))
-        })
-
-        window.addEventListener('locationchange', () => {
-            this.#postMessage({
-                name: 'SiteOSClientLocationChanged',
-                args: [location.href]
-            })
-        })
-    }
 
     #onMessage (event) {
-        const referrerOrigin = new URL(this.referrer).origin
+        const controllerLocation = window.opener ? window.opener.location : window.parent.location
 
-        if (event.origin !== referrerOrigin) {
+        if (event.source.location !== controllerLocation) {
             return
         }
 
@@ -99,24 +45,99 @@ export class SiteOSClient {
         listener(...args)
     }
 
+
+
+
+
+    #attachLocationChangeEvents () {
+        const { pushState, replaceState } = history
+
+        history.pushState = function () {
+            const value = pushState.apply(this, arguments)
+
+            const event = new Event('locationchange')
+
+            window.dispatchEvent(event)
+
+            return value
+        }
+
+        history.replaceState = function () {
+            const value = replaceState.apply(this, arguments)
+
+            const event = new Event('locationchange')
+
+            window.dispatchEvent(event)
+
+            return value
+        }
+
+        window.addEventListener('popstate', () => {
+            const event = new Event('locationchange')
+
+            window.dispatchEvent(event)
+        })
+
+        window.addEventListener('locationchange', () => {
+            const message = {
+                name:'SiteOSClientLocationChanged',
+                args: [ location.href ]
+            }
+
+            this.#postMessage(message)
+        })
+    }
+
+
+
+
+
     #postMessage (data) {
         if (window.opener) {
-            window.opener.postMessage(data, this.referrer)
+            window.opener.postMessage(data, '*') // todo: parent origin
 
             return
         }
 
 
-        window.parent.postMessage(data, this.referrer)
+        window.parent.postMessage(data, '*') // todo: parent origin
     }
+
+
+
+
+
+    #resolveRequest (promiseID, args) {
+        const resolve = this.promises[promiseID]
+
+        if (!resolve) {
+            return
+        }
+
+        resolve(...args)
+
+        delete this.promises[promiseID]
+    }
+
+
+
+
 
     on (name, cb) {
         this.listeners[name] = cb
     }
 
+
+
+
+
     off (name) {
         delete this.listeners[name]
     }
+
+
+
+
 
     emit (name, ...args) {
         const payload = {
@@ -126,6 +147,10 @@ export class SiteOSClient {
 
         this.#postMessage(payload)
     }
+
+
+
+
 
     request (name, ...args) {
         const id = crypto.randomUUID()
@@ -146,6 +171,10 @@ export class SiteOSClient {
         return promise
     }
 
+
+
+
+
     resolve (promiseID, ...args) {
         const payload = {
             promiseID,
@@ -153,17 +182,5 @@ export class SiteOSClient {
         }
 
         this.#postMessage(payload)
-    }
-
-    #resolveRequest (promiseID, args) {
-        const resolve = this.promises[promiseID]
-
-        if (!resolve) {
-            return
-        }
-
-        resolve(...args)
-
-        delete this.promises[promiseID]
     }
 }

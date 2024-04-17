@@ -1,10 +1,6 @@
 export class SiteOSController {
     constructor (url) {
-        const newURL = new URL(url)
-
-        newURL.searchParams.set('SiteOSReferrer', location.origin)
-
-        this.url = newURL
+        this.url = url
 
         this.origin = new URL(url).origin
 
@@ -19,24 +15,38 @@ export class SiteOSController {
         this.#init()
     }
 
+
+
+
+
     #init () {
         window.addEventListener('message', (event) => this.#onMessage(event))
 
         this.#createHiddenContainer()
     }
 
+
+
+
+
     #onMessage (event) {
-        let isOwnInstance = false
+        let matchedInstance
 
         for (const instance of this.instances) {
-            if (instance.target.contentWindow === event.source) {
-                isOwnInstance = true
+            const matchedFrame = instance.type === 'iframe' && (instance.target.contentWindow === event.source)
 
-                break
-            }
+            const matchedTab = instance.type === 'tab' && (instance.target === event.source)
+            
+            if (!matchedFrame && !matchedTab) continue
+
+            matchedInstance = instance
+
+            break
         }
 
-        if (event.origin !== this.origin || !isOwnInstance) return
+        if (event.origin !== this.origin && !matchedInstance) {
+            return
+        }
 
         const { name, args, promiseID } = event.data
 
@@ -48,29 +58,39 @@ export class SiteOSController {
 
         const listener = this.listeners[name]
 
-        if (!listener) return
-
-        let targetInstance
-
-        for (const instance of this.instances) {
-            const matchedFrame = instance.type === 'iframe' && (instance.target.contentWindow === event.source)
-
-            const matchedTab = instance.type === 'tab' && (instance.target === event.source)
-            
-            if (!matchedFrame && !matchedTab) continue
-
-            targetInstance = instance
-
-            break
+        if (!listener) {
+            return
         }
 
-        listener(...args, targetInstance)
+        listener(...args, matchedInstance)
     }
+
+
+
+
+
+    #resolveRequest (promiseID, args) {
+        const resolve = this.promises[promiseID]
+
+        if (!resolve) {
+            return
+        }
+
+        resolve(...args)
+
+        delete this.promises[promiseID]
+    }
+
+
+
+
 
     #createHiddenContainer () {
         const hiddenContainer = document.getElementById(this.hiddenContainerID)
 
-        if (hiddenContainer) return
+        if (hiddenContainer) {
+            return
+        }
 
         const div = document.createElement('div')
 
@@ -81,11 +101,16 @@ export class SiteOSController {
         document.body.appendChild(div)
     }
 
+
+
+
+
     #createInstance (target, type) {
         const instance = {
             target,
             type,
-            origin: this.origin
+            origin: this.origin,
+            url: this.url
         }
 
         instance.listeners = {}
@@ -113,6 +138,14 @@ export class SiteOSController {
             this.target.postMessage(payload, this.origin)
         }
 
+        instance.toTab = function () {
+            this.type = 'tab'
+
+            this.target.remove()
+
+            this.target = window.open(this.url)
+        }
+
         instance.resolve = function (promiseID, ...args) {
             const payload = {
                 promiseID,
@@ -132,7 +165,9 @@ export class SiteOSController {
             let matchedIndex
 
             for (const [index, obj] of this.instances.entries()) {
-                if (obj !== instance) continue
+                if (obj !== instance) {
+                    continue
+                }
 
                 matchedIndex = index
 
@@ -149,13 +184,25 @@ export class SiteOSController {
         return instance
     }
 
+
+
+
+
     on (name, cb) {
         this.listeners[name] = cb
     }
 
+
+
+
+
     off (name) {
         delete this.listeners[name]
     }
+
+
+
+
 
     emit (name, ...args) {
         const payload = {
@@ -174,6 +221,10 @@ export class SiteOSController {
         }
     }
 
+
+
+
+
     async request (name, ...args) {
         const id = crypto.randomUUID()
 
@@ -187,6 +238,10 @@ export class SiteOSController {
 
         return promise
     }
+
+
+
+
 
     resolve (promiseID, ...args) {
         const payload = {
@@ -205,17 +260,9 @@ export class SiteOSController {
         }
     }
 
-    #resolveRequest (promiseID, args) {
-        const resolve = this.promises[promiseID]
+    
 
-        if (!resolve) {
-            return
-        }
 
-        resolve(...args)
-
-        delete this.promises[promiseID]
-    }
 
     async launch (containerOrID) {
         const promise = new Promise(resolve => {
@@ -256,6 +303,10 @@ export class SiteOSController {
         return promise
     }
 
+
+
+
+    
     launchTab () {
         const tab = window.open(this.url)
 
