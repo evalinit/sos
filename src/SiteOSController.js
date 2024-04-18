@@ -165,16 +165,26 @@ export class SiteOSController {
             return promise
         }
 
-        instance.toTab = function () {
+        instance.toTab = async function () {
             if (this.type === 'tab') {
                 return
             }
 
-            this.type = 'tab'
+            const promise = new Promise(resolve => {
+                this.on('SiteOSClientLoaded', () => {
+                    this.off('SiteOSClientLoaded')
 
-            this.target.remove()
+                    resolve()
+                })
 
-            this.target = window.open(this.url)
+                this.type = 'tab'
+
+                this.target.remove()
+
+                this.target = window.open(this.url)
+            })
+
+            return promise
         }
 
         instance.resolve = function (promiseID, ...args) {

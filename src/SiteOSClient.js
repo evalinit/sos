@@ -14,6 +14,8 @@ export class SiteOSClient {
     #init () {
         window.addEventListener('message', event => this.#onMessage(event))
 
+        window.addEventListener('load', () => this.#onLoad())
+
         this.#attachLocationChangeEvents()
     }
 
@@ -43,6 +45,18 @@ export class SiteOSClient {
         }
 
         listener(...args)
+    }
+
+
+
+
+
+    #onLoad () {
+        const payload = {
+            name: 'SiteOSClientLoaded'
+        }
+
+        this.#postMessage(payload)
     }
 
 
