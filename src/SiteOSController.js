@@ -44,7 +44,7 @@ export class SiteOSController {
             break
         }
 
-        if (event.origin !== this.origin && !matchedInstance) {
+        if (event.origin !== this.origin || !matchedInstance) {
             return
         }
 
