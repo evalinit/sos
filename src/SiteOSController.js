@@ -110,7 +110,8 @@ export class SiteOSController {
             target,
             type,
             origin: this.origin,
-            url: this.url
+            url: this.url,
+            outerThis: this
         }
 
         instance.listeners = {}
@@ -138,7 +139,37 @@ export class SiteOSController {
             this.target.postMessage(payload, this.origin)
         }
 
+        instance.toFrame = async function (containerOrId) {
+            if (this.type === 'iframe') {
+                return
+            }
+
+            const promise = new Promise(resolve => {
+                const frame = this.outerThis.#createFrame()
+
+                frame.onload = () => {
+                    resolve()
+                }
+
+                this.type = 'iframe'
+
+                this.target.close()
+
+                this.target = frame
+
+                const container = this.outerThis.#getContainer(containerOrId)
+
+                container.appendChild(frame)
+            })
+
+            return promise
+        }
+
         instance.toTab = function () {
+            if (this.type === 'tab') {
+                return
+            }
+
             this.type = 'tab'
 
             this.target.remove()
@@ -182,6 +213,47 @@ export class SiteOSController {
         this.instances.push(instance)
 
         return instance
+    }
+
+
+
+
+
+    #createFrame () {
+        const iframe = document.createElement('iframe')
+
+        iframe.src = this.url
+        iframe.allow = 'geolocation; microphone; camera; display-capture;'
+        iframe.sandbox = 'allow-modals allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation-by-user-activation allow-downloads'
+        iframe.allowfullscreen = ''
+        iframe.allowpaymentrequest = ''
+        iframe.frameborder = '0'
+        iframe.style.width = '100%'
+        iframe.style.height = '100%'
+
+        return iframe
+    }
+
+
+
+
+
+    #getContainer (containerOrId) {
+        let container
+
+        if (containerOrId) {
+            if (typeof containerOrId === 'string') {
+                container = document.getElementById(containerOrId)
+            } else {
+                container = containerOrId
+            }
+        }
+
+        if (!container) {
+            container = document.getElementById(this.hiddenContainerID)
+        }
+
+        return container
     }
 
 
@@ -264,18 +336,9 @@ export class SiteOSController {
 
 
 
-    async launch (containerOrID) {
+    async launch (containerOrId) {
         const promise = new Promise(resolve => {
-            const iframe = document.createElement('iframe')
-
-            iframe.src = this.url
-            iframe.allow = 'geolocation; microphone; camera; display-capture;'
-            iframe.sandbox = 'allow-modals allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation-by-user-activation allow-downloads'
-            iframe.allowfullscreen = ''
-            iframe.allowpaymentrequest = ''
-            iframe.frameborder = '0'
-            iframe.style.width = '100%'
-            iframe.style.height = '100%'
+            const iframe = this.#createFrame()
 
             const instance = this.#createInstance(iframe, 'iframe')
 
@@ -283,19 +346,7 @@ export class SiteOSController {
                 resolve(instance)
             })
 
-            let container
-
-            if (containerOrID) {
-                if (typeof containerOrID === 'string') {
-                    container = document.getElementById(containerOrID)
-                } else {
-                    container = containerOrID
-                }
-            }
-
-            if (!container) {
-                container = document.getElementById(this.hiddenContainerID)
-            }
+            const container = this.#getContainer(containerOrId)
 
             container.appendChild(iframe)
         })
