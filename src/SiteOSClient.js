@@ -53,7 +53,8 @@ export class SiteOSClient {
 
     #onLoad () {
         const payload = {
-            name: 'SiteOSClientLoaded'
+            name: 'SiteOSClientLoaded',
+            args: []
         }
 
         this.#postMessage(payload)

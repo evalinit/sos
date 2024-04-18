@@ -36,7 +36,7 @@ export class SiteOSController {
             const matchedFrame = instance.type === 'iframe' && (instance.target.contentWindow === event.source)
 
             const matchedTab = instance.type === 'tab' && (instance.target === event.source)
-            
+
             if (!matchedFrame && !matchedTab) continue
 
             matchedInstance = instance
@@ -58,11 +58,11 @@ export class SiteOSController {
 
         const listener = this.listeners[name]
 
-        if (!listener) {
-            return
-        }
+        listener?.(...args, matchedInstance)
 
-        listener(...args, matchedInstance)
+        const instanceListener = matchedInstance.listeners[name]
+
+        instanceListener?.(...args)
     }
 
 
