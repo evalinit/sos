@@ -2,7 +2,7 @@ export class SiteOSController {
     constructor (url) {
         this.#setURL(url)
 
-        this.origin = new URL(url).origin
+        this.origin = new URL(this.url).origin
 
         this.listeners = {}
 
