@@ -1,6 +1,6 @@
 export class SiteOSController {
     constructor (url) {
-        this.url = url
+        this.#setURL(url)
 
         this.origin = new URL(url).origin
 
@@ -13,6 +13,18 @@ export class SiteOSController {
         this.hiddenContainerID = 'site-os-hidden-container'
 
         this.#init()
+    }
+
+
+
+
+
+    #setURL (url) {
+        if (url.startsWith('/')) {
+            url = `${ location.origin }${ url }`
+        }
+
+        this.url = url
     }
 
 
