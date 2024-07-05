@@ -241,10 +241,18 @@ export class SiteOSController {
 
 
 
-    #createFrame () {
+    #createFrame (props) {
         const iframe = document.createElement('iframe')
 
-        iframe.src = this.url
+        const url = new URL(this.url)
+
+        if (props) {
+            for (const [ key, value ] of Object.entries(props)) {
+                url.searchParams.set(key, value)
+            }
+        }
+
+        iframe.src = url.href
         iframe.allow = 'geolocation; microphone; camera; display-capture;'
         iframe.sandbox = 'allow-modals allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation-by-user-activation allow-downloads'
         iframe.allowfullscreen = ''
@@ -358,9 +366,9 @@ export class SiteOSController {
 
 
 
-    async launch (containerOrId) {
+    async launch (containerOrId, props) {
         const promise = new Promise(resolve => {
-            const iframe = this.#createFrame()
+            const iframe = this.#createFrame(props)
 
             const instance = this.#createInstance(iframe, 'iframe')
 

@@ -4,6 +4,8 @@ export class SiteOSClient {
 
         this.promises = {}
 
+        this.props = {}
+
         this.#init()
     }
 
@@ -17,6 +19,8 @@ export class SiteOSClient {
         window.addEventListener('load', () => this.#onLoad())
 
         this.#attachLocationChangeEvents()
+
+        this.#setProps()
     }
 
 
@@ -101,6 +105,22 @@ export class SiteOSClient {
 
             this.#postMessage(message)
         })
+    }
+
+
+
+
+
+    #setProps () {
+        const urlParams = new URLSearchParams(window.location.search)
+
+        const props = {}
+
+        for (const [ key, value ] of urlParams.entries()) {
+            props[key] = value
+        }
+
+        this.props = props
     }
 
 
