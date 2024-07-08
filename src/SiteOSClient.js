@@ -20,7 +20,7 @@ export class SiteOSClient {
 
         this.#attachLocationChangeEvents()
 
-        this.#setProps()
+        this.#requestProps()
     }
 
 
@@ -111,16 +111,24 @@ export class SiteOSClient {
 
 
 
-    #setProps () {
-        const urlParams = new URLSearchParams(window.location.search)
+    #requestProps () {
+        this.propsPromise = new Promise(resolve => {
+            this.propsResolve = resolve
+        })
 
-        const props = {}
+        this.listeners.SiteOSProps = (props) => {
+            this.props = props
 
-        for (const [ key, value ] of urlParams.entries()) {
-            props[key] = value
+            this.propsResolve(this.props)
+
+            this.propsPromise = null
         }
 
-        this.props = props
+        const payload = {
+            name: 'SiteOSProps'
+        }
+
+        this.#postMessage(payload)
     }
 
 
@@ -152,6 +160,14 @@ export class SiteOSClient {
         resolve(...args)
 
         delete this.promises[promiseID]
+    }
+
+
+
+
+
+    async propsReady () {
+        return this.propsPromise ? this.propsPromise : this.props
     }
 
 

@@ -60,7 +60,7 @@ export class SiteOSController {
             return
         }
 
-        const { name, args, promiseID } = event.data
+        const { name, args = [], promiseID } = event.data
 
         if (promiseID) {
             this.#resolveRequest(promiseID, args)
@@ -117,16 +117,23 @@ export class SiteOSController {
 
 
 
-    #createInstance (target, type) {
+    #createInstance (target, type, props) {
+        props = props || {}
+        
         const instance = {
             target,
             type,
+            props,
             origin: this.origin,
             url: this.url,
             outerThis: this
         }
 
         instance.listeners = {}
+
+        instance.listeners.SiteOSProps = function () {
+            this.emit('SiteOSProps', this.props)
+        }.bind(instance)
 
         instance.on = function (name, cb) {
             this.listeners[name] = cb
@@ -241,18 +248,10 @@ export class SiteOSController {
 
 
 
-    #createFrame (props) {
+    #createFrame () {
         const iframe = document.createElement('iframe')
 
-        const url = new URL(this.url)
-
-        if (props) {
-            for (const [ key, value ] of Object.entries(props)) {
-                url.searchParams.set(key, value)
-            }
-        }
-
-        iframe.src = url.href
+        iframe.src = this.url
         iframe.allow = 'geolocation; microphone; camera; display-capture;'
         iframe.sandbox = 'allow-modals allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation-by-user-activation allow-downloads'
         iframe.allowfullscreen = ''
@@ -368,9 +367,9 @@ export class SiteOSController {
 
     async launch (containerOrId, props) {
         const promise = new Promise(resolve => {
-            const iframe = this.#createFrame(props)
+            const iframe = this.#createFrame()
 
-            const instance = this.#createInstance(iframe, 'iframe')
+            const instance = this.#createInstance(iframe, 'iframe', props)
 
             iframe.addEventListener('load', () => {
                 resolve(instance)
@@ -388,10 +387,10 @@ export class SiteOSController {
 
 
     
-    launchTab () {
+    launchTab (props) {
         const tab = window.open(this.url)
 
-        const instance = this.#createInstance(tab, 'tab')
+        const instance = this.#createInstance(tab, 'tab', props)
 
         return instance
     }
