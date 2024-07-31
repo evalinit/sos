@@ -150,7 +150,7 @@ export class SiteOSClient {
         this.listeners.SiteOSPropsUpdated = (props) => {
             this.props = this.#createProxy(props)
 
-            this?.propsUpdated(props)
+            this.propsUpdated?.(props)
         }
 
         const payload = {
