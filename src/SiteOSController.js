@@ -117,13 +117,40 @@ export class SiteOSController {
 
 
 
+    #createProxy (props) {
+        const handler = {
+            set: (obj, key, value) => {
+                obj[key] = value
+
+                this.emit('SiteOSPropsUpdated', obj)
+
+                return true
+            },
+            deleteProperty: (obj, key) => {
+                delete obj[key]
+
+                this.emit('SiteOSPropsUpdated', obj)
+
+                return true
+            }
+        }
+
+        return new Proxy(props, handler)
+    }
+
+
+
+
+
     #createInstance (target, type, props) {
         props = props || {}
+
+        const proxy = this.#createProxy(props)
         
         const instance = {
             target,
             type,
-            props,
+            props: proxy,
             origin: this.origin,
             url: this.url,
             outerThis: this
@@ -132,7 +159,13 @@ export class SiteOSController {
         instance.listeners = {}
 
         instance.listeners.SiteOSProps = function () {
-            this.emit('SiteOSProps', this.props)
+            this.emit('SiteOSProps', { ...this.props })
+        }.bind(instance)
+
+        instance.listeners.SiteOSPropsUpdated = function (props) {
+            this.props = this.outerThis.#createProxy(props)
+
+            this?.propsUpdated(props)
         }.bind(instance)
 
         instance.on = function (name, cb) {
