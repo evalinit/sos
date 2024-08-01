@@ -150,8 +150,7 @@ export class SiteOSController {
         const instance = {
             target,
             type,
-            props,
-            proxy,
+            props: proxy,
             origin: this.origin,
             url: this.url,
             outerThis: this
@@ -164,9 +163,7 @@ export class SiteOSController {
         }.bind(instance)
 
         instance.listeners.SiteOSPropsUpdated = function (props) {
-            this.props = props
-
-            this.proxy = this.outerThis.#createProxy(props)
+            this.props = this.outerThis.#createProxy(props)
 
             this.propsUpdated?.(props)
         }.bind(instance)
