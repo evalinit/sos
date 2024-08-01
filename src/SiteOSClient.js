@@ -4,6 +4,8 @@ export class SiteOSClient {
 
         this.promises = {}
 
+        this.props = {}
+
         this.#init()
     }
 
@@ -109,7 +111,7 @@ export class SiteOSClient {
 
 
 
-    #createProxy (props) {
+    #setProxy () {
         const handler = {
             set: (obj, key, value) => {
                 obj[key] = value
@@ -127,7 +129,7 @@ export class SiteOSClient {
             }
         }
 
-        return new Proxy(props, handler)
+        this.proxy = new Proxy(this.props, handler)
     }
 
 
@@ -140,7 +142,9 @@ export class SiteOSClient {
         })
 
         this.listeners.SiteOSProps = (props) => {
-            this.props = this.#createProxy(props)
+            this.props = props
+
+            this.#setProxy()
 
             this.propsResolve(props)
 
@@ -148,7 +152,9 @@ export class SiteOSClient {
         }
 
         this.listeners.SiteOSPropsUpdated = (props) => {
-            this.props = this.#createProxy(props)
+            this.props = props
+
+            this.#setProxy()
 
             this.propsUpdated?.(props)
         }
