@@ -239,6 +239,20 @@ export class SiteOSController {
             return promise
         }
 
+        instance.request = async function (name, ...args) {
+            const id = crypto.randomUUID()
+
+            const promise = new Promise(resolve => {
+                this.outerThis.promises[id] = resolve
+            })
+    
+            args.push(id)
+    
+            this.emit(name, ...args)
+    
+            return promise
+        }
+
         instance.resolve = function (promiseID, ...args) {
             const payload = {
                 promiseID,
