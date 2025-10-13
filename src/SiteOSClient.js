@@ -4,6 +4,10 @@ export class SiteOSClient {
 
         this.promises = {}
 
+        this.queue = []
+
+        this.controllerOrigin = null
+
         this.#init()
     }
 
@@ -26,13 +30,17 @@ export class SiteOSClient {
 
 
     #onMessage (event) {
-        const controllerLocation = window.opener ? window.opener.location : window.parent.location
+        const { name, args, promiseID } = event.data
 
-        if (event.source.location !== controllerLocation) {
+        if (name === 'SiteOSControllerOrigin' && !this.controllerOrigin) {
+            this.#onControllerOrigin(...args)
+
             return
         }
 
-        const { name, args, promiseID } = event.data
+        if (event.origin !== this.controllerOrigin) {
+            return
+        }
 
         if (promiseID) {
             this.#resolveRequest(promiseID, args)
@@ -47,6 +55,20 @@ export class SiteOSClient {
         }
 
         listener(...args)
+    }
+
+
+
+
+
+    #onControllerOrigin (origin) {
+        this.controllerOrigin = origin
+
+        for (const message of this.queue) {
+            this.#postMessage(message)
+        }
+
+        this.queue = []
     }
 
 
@@ -165,14 +187,21 @@ export class SiteOSClient {
 
 
     #postMessage (data) {
-        if (window.opener) {
-            window.opener.postMessage(data, '*') // todo: parent origin
+        if (!this.controllerOrigin) {
+            this.queue.push(data)
 
             return
         }
 
 
-        window.parent.postMessage(data, '*') // todo: parent origin
+        if (window.opener) {
+            window.opener.postMessage(data, this.controllerOrigin)
+
+            return
+        }
+
+
+        window.parent.postMessage(data, this.controllerOrigin)
     }
 
 

@@ -1,8 +1,6 @@
 export class SiteOSController {
-    constructor (url) {
-        this.#setURL(url)
-
-        this.origin = new URL(this.url).origin
+    constructor (url, options = {}) {
+        this.options = options
 
         this.listeners = {}
 
@@ -11,6 +9,10 @@ export class SiteOSController {
         this.instances = []
 
         this.hiddenContainerID = 'site-os-hidden-container'
+
+        this.#setURL(url)
+
+        this.#setOrigins()
 
         this.#init()
     }
@@ -25,6 +27,18 @@ export class SiteOSController {
         }
 
         this.url = url
+    }
+
+
+
+
+
+    #setOrigins () {
+        const baseOrigin = new URL(this.url).origin
+
+        const allowedOrigins = this.options.allowedOrigins ?? []
+
+        this.origins = new Set([ baseOrigin, ...allowedOrigins ])
     }
 
 
@@ -56,7 +70,9 @@ export class SiteOSController {
             break
         }
 
-        if (event.origin !== this.origin || !matchedInstance) {
+        const matchedOrigin = this.origins.has(event.origin)
+
+        if (!matchedOrigin || !matchedInstance) {
             return
         }
 
@@ -142,6 +158,16 @@ export class SiteOSController {
 
 
 
+    #postToAllOrigins (target, payload) {
+        for (const origin of this.origins) {
+            target.postMessage(payload, origin)
+        }
+    }
+
+
+
+
+
     #createInstance (target, type, props) {
         props = props || {}
 
@@ -151,8 +177,6 @@ export class SiteOSController {
             target,
             type,
             props: proxy,
-            origin: this.origin,
-            url: this.url,
             outerThis: this
         }
 
@@ -183,12 +207,12 @@ export class SiteOSController {
             }
 
             if (this.type === 'iframe') {
-                this.target.contentWindow.postMessage(payload, this.origin)
+                this.outerThis.#postToAllOrigins(this.target.contentWindow, payload)
 
                 return
             }
 
-            this.target.postMessage(payload, this.origin)
+            this.outerThis.#postToAllOrigins(this.target, payload)
         }
 
         instance.toFrame = async function (containerOrId) {
@@ -233,7 +257,7 @@ export class SiteOSController {
 
                 this.target.remove()
 
-                this.target = window.open(this.url)
+                this.target = window.open(this.outerThis.url)
             })
 
             return promise
@@ -260,12 +284,12 @@ export class SiteOSController {
             }
 
             if (this.type === 'iframe') {
-                this.target.contentWindow.postMessage(payload, this.origin)
+                this.outerThis.#postToAllOrigins(this.target.contentWindow, payload)
 
                 return
             }
 
-            this.target.postMessage(payload, this.origin)
+            this.outerThis.#postToAllOrigins(this.target, payload)
         }
 
         instance.destroy = () => {
@@ -360,12 +384,13 @@ export class SiteOSController {
 
         for (const instance of this.instances) {
             if (instance.type === 'iframe') {
-                instance.target.contentWindow.postMessage(payload, this.origin)
+                this.#postToAllOrigins(instance.target.contentWindow, payload)
+
 
                 continue
             }
             
-            instance.target.postMessage(payload, this.origin)
+            this.#postToAllOrigins(instance.target, payload)
         }
     }
 
@@ -399,12 +424,12 @@ export class SiteOSController {
 
         for (const instance of this.instances) {
             if (instance.type === 'iframe') {
-                instance.target.contentWindow.postMessage(payload, this.origin)
+                this.#postToAllOrigins(instance.target.contentWindow, payload)
 
                 continue
             }
             
-            instance.target.postMessage(payload, this.origin)
+            this.#postToAllOrigins(instance.target, payload)
         }
     }
 
@@ -419,6 +444,8 @@ export class SiteOSController {
             const instance = this.#createInstance(iframe, 'iframe', props)
 
             iframe.addEventListener('load', () => {
+                instance.emit('SiteOSControllerOrigin', location.origin)
+
                 resolve(instance)
             })
 
