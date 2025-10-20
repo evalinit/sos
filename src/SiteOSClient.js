@@ -30,6 +30,12 @@ export class SiteOSClient {
 
 
     #onMessage (event) {
+	const controllerLocation = window.opener ? window.opener.location : window.parent.location
+
+        if (event.source.location !== controllerLocation) {
+            return
+        }
+
         const { name, args, promiseID } = event.data
 
         if (name === 'SiteOSControllerOrigin' && !this.controllerOrigin) {
